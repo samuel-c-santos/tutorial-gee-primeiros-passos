@@ -1,193 +1,286 @@
-# 🚀 Guia Rápido - Google Earth Engine
+# Guia Rápido - Google Earth Engine
 
-> Resumo executivo para começar no GEE em minutos
+> Comandos e funções essenciais para análise geoespacial
 
-## ⚡ Início Rápido (5 minutos)
+## Configuração Inicial
 
-### 1. Registrar Conta
+Para o passo a passo completo de configuração, consulte o [tutorial](https://samuel-c-santos.github.io/tutorial-gee-primeiros-passos).
 
-```
-1. Acesse: https://code.earthengine.google.com/
-2. Clique: "I WANT TO REGISTER A NEW PROJECT"
-3. Escolha: Uso NÃO COMERCIAL
-4. Preencha: Nome do projeto + dados institucionais
-5. Aguarde: Aprovação (geralmente instantânea)
-6. Ative: API do Earth Engine
-```
+## Comandos Essenciais
 
-### 2. Fazer Upload de Shapefile
-
-```
-1. Assets > NEW > Shapefile
-2. SELECT > Escolha TODOS os arquivos (.shp, .shx, .dbf, .prj)
-3. Defina um Asset ID (ex: meu-municipio)
-4. UPLOAD
-5. Aguarde processamento na aba Tasks
-```
-
-### 3. Visualizar no Mapa
-
-Cole este código no editor e clique **RUN**:
+### Manipulação de Imagens
 
 ```javascript
-// Substitua pelo seu Asset ID
-var area = ee.FeatureCollection("projects/SEU-PROJETO/assets/SEU-ASSET");
-
-// Centralizar e visualizar
-Map.centerObject(area, 8);
-Map.addLayer(area, {color: 'blue'}, 'Minha Área');
-```
-
-## 📋 Checklist de Configuração
-
-- [ ] Conta Google criada
-- [ ] Projeto GEE registrado
-- [ ] API do Earth Engine ativada
-- [ ] Shapefile pronto (todos os arquivos)
-- [ ] Asset ID copiado
-- [ ] Primeiro script executado com sucesso
-
-## 🎯 Comandos Essenciais
-
-### Carregar Imagem de Satélite
-
-```javascript
-// Landsat 8 - última imagem disponível
+// Carregar imagem específica
 var imagem = ee.Image('LANDSAT/LC08/C02/T1_TOA/LC08_225063_20230101');
-Map.addLayer(imagem, {bands: ['B4', 'B3', 'B2'], max: 0.3}, 'RGB Natural');
+
+// Clipar para área de interesse
+var imagem_clipada = imagem.clip(area);
+
+// Calcular estatísticas
+var stats = imagem.reduceRegion({
+  reducer: ee.Reducer.mean(),
+  geometry: area,
+  scale: 30,
+  maxPixels: 1e13
+});
 ```
 
-### Filtrar por Data e Região
+### Análise de Coleções
 
 ```javascript
-// Sentinel-2 no último ano
+// Filtrar coleção por múltiplos critérios
 var colecao = ee.ImageCollection('COPERNICUS/S2_SR')
   .filterBounds(area)
   .filterDate('2023-01-01', '2023-12-31')
-  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20));
+  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+  .filterMetadata('MGRS_TILE', 'equals', '21LXS');
 
-print('Número de imagens:', colecao.size());
+// Mediana da coleção
+var mediana = colecao.median();
+
+// Primeira e última imagem
+var primeira = colecao.first();
+var ultima = colecao.sort('system:time_start').limit(1);
 ```
 
-### Calcular NDVI
+### Índices Espectrais
 
 ```javascript
-var calcularNDVI = function(imagem) {
-  return imagem.normalizedDifference(['B8', 'B4']).rename('NDVI');
+// NDVI (Sentinel-2)
+var ndvi = imagem.normalizedDifference(['B8', 'B4']).rename('NDVI');
+
+// NDWI
+var ndwi = imagem.normalizedDifference(['B3', 'B8']).rename('NDWI');
+
+// EVI
+var evi = imagem.expression(
+  '2.5 * ((NIR - RED) / (NIR + 6 * RED - 7.5 * BLUE + 1))', {
+    'NIR': imagem.select('B8'),
+    'RED': imagem.select('B4'),
+    'BLUE': imagem.select('B2')
+});
+
+// Múltiplos índices em uma imagem
+var indices = imagem.addBands(ndvi).addBands(ndwi).addBands(evi);
+```
+
+### Classificação e Máscaras
+
+```javascript
+// Máscara de nuvens (Sentinel-2)
+var mascara_nuvens = function(imagem) {
+  var qa = imagem.select('QA60');
+  var nuvemBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+  var mascara = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+  return imagem.updateMask(mascara);
 };
 
-var ndvi = calcularNDVI(imagem);
-Map.addLayer(ndvi, {min: 0, max: 1, palette: ['red', 'yellow', 'green']}, 'NDVI');
+// Classificação simples baseada em NDVI
+var classes = ndvi.gt(0.3).where(
+  ndvi.gt(0.6), 2
+).where(
+  ndvi.lte(0.3), 0
+).rename('cobertura_vegetal');
 ```
 
-### Exportar para Google Drive
+### Operações Vetoriais
 
 ```javascript
-Export.image.toDrive({
+// Buffer em geometria
+var buffer = area.geometry().buffer(1000);
+
+// Intersecção e união
+var interseccao = area.intersection(outra_area);
+var uniao = area.union(outra_area);
+
+// Calcular área
+var area_km2 = area.geometry().area().divide(1000000);
+
+// Zonal statistics
+var zonal_stats = ndvi.reduceRegions({
+  collection: area,
+  reducer: ee.Reducer.mean().combine({
+    reducer2: ee.Reducer.stdDev(),
+    sharedInputs: true
+  }),
+  scale: 10
+});
+```
+
+### Exportação Avançada
+
+```javascript
+// Exportar tabela de resultados
+Export.table.toDrive({
+  collection: zonal_stats,
+  description: 'estatisticas_ndvi',
+  fileFormat: 'CSV'
+});
+
+// Exportar imagem com parametros específicos
+Export.image.toAsset({
   image: ndvi,
-  description: 'NDVI_2023',
-  scale: 30,
+  description: 'ndvi_asset',
+  assetId: 'projects/SEU-PROJETO/assets/ndvi_resultado',
+  scale: 10,
   region: area,
   maxPixels: 1e13
 });
-// Depois clique em RUN na aba Tasks
+
+// Exportar múltiplas imagens em lote
+var imagens_para_exportar = colecao.toList(colecao.size());
+for (var i = 0; i < colecao.size().getInfo(); i++) {
+  var img = ee.Image(imagens_para_exportar.get(i));
+  var data = img.date().format('YYYY-MM-dd').getInfo();
+  Export.image.toDrive({
+    image: img.select('B4','B3','B2'),
+    description: 'RGB_' + data,
+    scale: 10,
+    region: area
+  });
+}
 ```
 
-## 🔧 Solução de Problemas Comuns
-
-### "Não consigo registrar projeto"
-✅ **Solução:** Certifique-se de estar usando credenciais acadêmicas/institucionais válidas
-
-### "Asset não aparece após upload"
-✅ **Solução:** Clique no botão de atualizar na aba Assets e aguarde o processamento em Tasks
-
-### "Erro ao executar script"
-✅ **Solução:** Verifique se o Asset ID está correto (cole o ID completo copiado dos detalhes do asset)
-
-### "Memory limit exceeded"
-✅ **Solução:** Reduza a área de análise ou aumente o parâmetro `scale` nas exportações
-
-## 📚 Estrutura Básica de um Script
+### Séries Temporais
 
 ```javascript
-// 1. DEFINIR ÁREA DE INTERESSE
-var aoi = ee.FeatureCollection("projects/.../assets/minha-area");
+// Criar série temporal de NDVI
+var serie_ndvi = ee.ImageCollection('COPERNICUS/S2_SR')
+  .filterBounds(area)
+  .filterDate('2020-01-01', '2023-12-31')
+  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+  .map(function(imagem) {
+    return imagem.addBands(
+      imagem.normalizedDifference(['B8', 'B4']).rename('NDVI')
+    );
+  });
 
-// 2. CARREGAR DADOS
-var colecao = ee.ImageCollection('COPERNICUS/S2_SR')
-  .filterBounds(aoi)
-  .filterDate('2023-06-01', '2023-08-31');
+// Gráfico de série temporal
+var grafico = ui.Chart.image.series(serie_ndvi.select('NDVI'), area, ee.Reducer.mean(), 500)
+  .setOptions({
+    title: 'Série Temporal NDVI',
+    vAxis: {title: 'NDVI'},
+    hAxis: {title: 'Data'},
+    lineWidth: 1,
+    pointSize: 3
+  });
 
-// 3. PROCESSAR
-var mediana = colecao.median().clip(aoi);
+print(grafico);
+```
 
-// 4. VISUALIZAR
-Map.centerObject(aoi, 10);
-Map.addLayer(mediana, {bands: ['B4','B3','B2'], max: 3000}, 'RGB');
+## Catálogos de Dados Principais
 
-// 5. EXPORTAR (opcional)
-Export.image.toDrive({
-  image: mediana,
-  description: 'composicao_verao_2023',
-  scale: 10,
-  region: aoi
+| Dataset | Resolução | Período | ID |
+|---------|-----------|---------|-----|
+| Landsat 8/9 | 30m | 2013-presente | `LANDSAT/LC08/C02/T1_L2` |
+| Sentinel-2 | 10-60m | 2015-presente | `COPERNICUS/S2_SR` |
+| MODIS NDVI | 250m | 2000-presente | `MODIS/006/MOD13Q1` |
+| SRTM | 30m | - | `USGS/SRTMGL1_003` |
+| CHIRPS Precipitação | 5km | 1981-presente | `UCSB-CHG/CHIRPS/DAILY` |
+| MapBiomas | 30m | 1985-2022 | `projects/mapbiomas-workspace/public/collection7` |
+
+## Operadores e Funções Úteis
+
+### Operadores Lógicos
+```javascript
+// Operadores de comparação
+.eq()    // igual
+.neq()   // diferente
+.lt()    // menor que
+.lte()   // menor ou igual
+.gt()    // maior que
+.gte()   // maior ou igual
+
+// Operadores lógicos
+.and()   // e
+.or()    // ou
+.not()   // não
+```
+
+### Redutores Estatísticos
+```javascript
+var media = colecao.mean();
+var mediana = colecao.median();
+var minimo = colecao.min();
+var maximo = colecao.max();
+var desvio_padrao = colecao.stdDev();
+
+// Redutor personalizado
+var custom_stats = colecao.reduce(ee.Reducer.mean()
+  .combine({
+    reducer2: ee.Reducer.minMax(),
+    sharedInputs: true
+  })
+  .combine({
+    reducer3: ee.Reducer.percentile([25, 75]),
+    sharedInputs: true
+  })
+);
+```
+
+### Funções de Data
+```javascript
+// Formatar data
+var data_formatada = ee.Date('2023-01-15').format('YYYY-MM-dd');
+
+// Calcular dias desde início do ano
+var dia_do_ano = ee.Date('2023-06-15').getRelative('day', 'year');
+
+// Avançar/retroceder tempo
+var data_futura = ee.Date('2023-01-01').advance(30, 'day');
+var data_passada = ee.Date('2023-01-01').advance(-1, 'month');
+```
+
+## Depuração e Validação
+
+### Verificar Propriedades
+```javascript
+// Informações da imagem
+print('Bandas:', imagem.bandNames());
+print('Propriedades:', imagem.propertyNames());
+print('Data:', imagem.date());
+print('Tipo de dados:', image.bandTypes());
+
+// Informações da coleção
+print('Número de imagens:', colecao.size());
+print('Período:', colecao.aggregate_min('system:time_start'), 
+      colecao.aggregate_max('system:time_start'));
+```
+
+### Validação de Dados
+```javascript
+// Verificar máscara
+var mascara_valida = imagem.mask().select(0);
+
+// Contar pixels válidos
+var pixels_validos = mascara_valida.reduceRegion({
+  reducer: ee.Reducer.count(),
+  geometry: area,
+  scale: 30
+});
+
+// Verificar valores mínimos e máximos
+var stats = imagem.reduceRegion({
+  reducer: ee.Reducer.minMax(),
+  geometry: area,
+  scale: 30
 });
 ```
 
-## 🎓 Recursos de Aprendizagem
+## Boas Práticas
 
-### Documentação Oficial
-- [Guia do Iniciante](https://developers.google.com/earth-engine/guides/getstarted)
-- [Catálogo de Dados](https://developers.google.com/earth-engine/datasets)
-- [Referência da API](https://developers.google.com/earth-engine/apidocs)
+1. **Sempre use clips** para delimitar área de análise
+2. **Verifique máscaras de nuvens** antes de processar
+3. **Use escalas apropriadas** para cada tipo de análise
+4. **Monitore uso de memória** com `maxPixels`
+5. **Documente parâmetros importantes** em comentários
+6. **Teste com áreas pequenas** antes de processar grandes regiões
 
-### Exemplos Práticos
-- [Scripts de Exemplo](https://code.earthengine.google.com/?accept_repo=users/google/datasets)
-- [Vídeos Tutoriais](https://www.youtube.com/c/GoogleEarthEngine)
+## Referências Rápidas
 
-### Comunidade
-- [Fórum Google Earth Engine](https://groups.google.com/g/google-earth-engine-developers)
-- [GEE no Stack Overflow](https://stackoverflow.com/questions/tagged/google-earth-engine)
-
-## 🗺️ Catálogos Mais Usados
-
-| Dataset | Descrição | ID |
-|---------|-----------|-----|
-| **Landsat 8** | Imagens multiespectrais 30m | `LANDSAT/LC08/C02/T1_L2` |
-| **Sentinel-2** | Imagens multiespectrais 10m | `COPERNICUS/S2_SR` |
-| **MODIS NDVI** | Índice de vegetação 250m | `MODIS/006/MOD13Q1` |
-| **SRTM** | Modelo de elevação 30m | `USGS/SRTMGL1_003` |
-| **MapBiomas** | Cobertura do solo Brasil | `projects/mapbiomas-workspace/public/collection7/mapbiomas_collection70_integration_v2` |
-
-## 💡 Dicas de Produtividade
-
-1. **Use Ctrl + Enter** para executar scripts rapidamente
-2. **Salve scripts frequentemente** no seu repositório pessoal
-3. **Use `print()` generosamente** para debugar variáveis
-4. **Documente seu código** com comentários (`//`)
-5. **Crie funções reutilizáveis** para análises repetitivas
-6. **Use variáveis com nomes descritivos** (`roi`, `aoi`, `area`)
-
-## 🎯 Próximos Objetivos
-
-Após dominar o básico, experimente:
-
-- [ ] Criar uma série temporal de NDVI
-- [ ] Detectar mudanças de cobertura do solo
-- [ ] Calcular estatísticas por município
-- [ ] Criar um aplicativo interativo (Apps)
-- [ ] Integrar GEE com Python (`earthengine-api`)
-- [ ] Processar dados de radar (Sentinel-1)
-- [ ] Publicar um mapa temático
-
-## 📞 Precisa de Ajuda?
-
-- 📖 Consulte o [Tutorial Completo](index.html)
-- 📧 Entre em contato: samuelsantosambiental@gmail.com
-- 🐙 Veja exemplos no [GitHub](https://github.com/samuel-c-santos)
-
----
-
-**Tempo estimado para setup completo:** 10-15 minutos
-
-**Boa sorte com suas análises geoespaciais!** 🌍✨
+- **Documentação:** https://developers.google.com/earth-engine
+- **Catálogo de Dados:** https://developers.google.com/earth-engine/datasets
+- **Exemplos:** https://code.earthengine.google.com/

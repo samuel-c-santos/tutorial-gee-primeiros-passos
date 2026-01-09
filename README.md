@@ -56,5 +56,4 @@ Este projeto educacional está disponível para uso livre. Sinta-se à vontade p
 
 ---
 
-**Desenvolvido por:** [Samuel Santos](https://samuel-c-santos.github.io/)  
-**Repositório:** [github.com/samuel-c-santos/tutorial-gee-primeiros-passos](https://github.com/samuel-c-santos/tutorial-gee-primeiros-passos)
+**Desenvolvido por:** [Samuel Santos](https://samuel-c-santos.github.io/)
