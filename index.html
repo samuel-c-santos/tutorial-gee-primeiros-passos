@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primeiros Passos no Google Earth Engine | Samuel Santos</title>
+    <meta name="description"
+        content="Aprenda a configurar seu projeto no Google Earth Engine, fazer upload de shapefiles e criar sua primeira visualização de dados geoespaciais.">
+    <meta name="author" content="Samuel Santos">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Prism.js for Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-dark: #1e40af;
+            --dark-navy: #0f172a;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --light-bg: #f8fafc;
+            --code-bg: #f1f5f9;
+            --accent-teal: #0891b2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background-color: #ffffff;
+        }
+
+        /* Header Navigation */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.875rem 0;
+            z-index: 1000;
+            transition: box-shadow 0.3s ease;
+        }
+
+        header.scrolled {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .nav-icons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-icon {
+            color: var(--text-secondary);
+            transition: color 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-icon:hover {
+            color: var(--text-primary);
+        }
+
+        .btn-contact {
+            background: var(--primary-blue);
+            color: white;
+            padding: 0.625rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-contact:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            padding: 4rem 2rem 3rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.25rem;
+            color: var(--dark-navy);
+        }
+
+        .hero-text h1 .highlight {
+            color: var(--primary-blue);
+        }
+
+        .hero-text p {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .hero-image {
+            position: relative;
+        }
+
+        .hero-image img {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        article {
+            background: white;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--dark-navy);
+            margin: 3rem 0 1.5rem;
+            position: relative;
+            padding-left: 1.25rem;
+        }
+
+        h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary-blue);
+            border-radius: 2px;
+        }
+
+        h3 {
+            font-size: 1.375rem;
+            font-weight: 600;
+            color: var(--dark-navy);
+            margin: 2.5rem 0 1rem;
+        }
+
+        p {
+            margin-bottom: 1.25rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+
+        strong {
+            font-weight: 600;
+            color: var(--dark-navy);
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            position: relative;
+            font-size: 0.875rem;
+        }
+
+        .code-block::before {
+            content: attr(data-language);
+            position: absolute;
+            top: 0.625rem;
+            right: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        /* Info Cards */
+        .info-card {
+            background: var(--light-bg);
+            border-left: 3px solid var(--primary-blue);
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .info-card.warning {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+        }
+
+        .info-card h4 {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--dark-navy);
+            font-size: 1rem;
+        }
+
+        .info-card p {
+            margin-bottom: 0.75rem;
+        }
+
+        .info-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Step Cards */
+        .step-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover {
+            border-color: var(--primary-blue);
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.08);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -0.875rem;
+            left: 1.5rem;
+            background: var(--primary-blue);
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        .step-card h3 {
+            margin-top: 0.75rem;
+            color: var(--primary-blue);
+        }
+
+        .step-card img {
+            width: 100%;
+            border-radius: 8px;
+            margin: 1.25rem 0;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Lists */
+        ul,
+        ol {
+            margin: 1.25rem 0;
+            padding-left: 1.75rem;
+        }
+
+        li {
+            margin-bottom: 0.625rem;
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        li::marker {
+            color: var(--primary-blue);
+        }
+
+        /* File Reference */
+        .file-ref {
+            background: #fdf2f8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.875em;
+            color: #be185d;
+            border: 1px solid #fce7f3;
+        }
+
+        /* Download Section */
+        .download-section {
+            background: linear-gradient(135deg, var(--dark-navy) 0%, #1e3a5f 100%);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            margin: 3rem 0;
+            text-align: center;
+        }
+
+        .download-section h3 {
+            color: white;
+            margin: 0 0 0.875rem;
+        }
+
+        .download-section p {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 1.5rem;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.625rem;
+            background: white;
+            color: var(--dark-navy);
+            padding: 0.875rem 1.75rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Contact Section */
+        .contact-section {
+            background: var(--light-bg);
+            padding: 3rem 2rem;
+            margin-top: 3rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            padding-left: 0;
+        }
+
+        .section-header h2::before {
+            display: none;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .contact-item svg {
+            color: var(--primary-blue);
+            flex-shrink: 0;
+        }
+
+        .contact-item a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .contact-item a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark-navy);
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+
+        footer p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .hero-text h1 {
+                font-size: 2.25rem;
+            }
+
+            nav {
+                padding: 0 1rem;
+            }
+
+            .nav-right {
+                gap: 0.75rem;
+            }
+
+            .btn-contact {
+                padding: 0.5rem 1rem;
+                font-size: 0.8125rem;
+            }
+
+            .step-card {
+                padding: 1.5rem;
+            }
+
+            .contact-info {
+                flex-direction: column;
+                gap: 1.25rem;
+                align-items: center;
+            }
+        }
+
+        /* Link Styles */
+        a:not(.logo):not(.nav-icon):not(.btn-contact):not(.download-btn):not(.contact-item a) {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        a:not(.logo):not(.nav-icon):not(.btn-contact):not(.download-btn):not(.contact-item a):hover {
+            text-decoration: underline;
+        }
+
+        /* Code Window (macOS Style) */
+        .code-window {
+            background-color: #f5f2f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            margin: 20px 0;
+        }
+
+        .window-header {
+            background-color: #e0e0e0;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .red {
+            background-color: #ff5f56;
+        }
+
+        .yellow {
+            background-color: #ffbd2e;
+        }
+
+        .green {
+            background-color: #27c93f;
+        }
+
+        .title {
+            margin-left: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Prism.js customizations */
+        pre[class*="language-"] {
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 20px !important;
+        }
+
+        code[class*="language-"],
+        pre[class*="language-"] {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+            font-size: 0.875rem !important;
+            line-height: 1.6 !important;
+        }
+
+        /* Accordion/Details for collapsible sections */
+        details {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            background: var(--light-bg);
+        }
+
+        details summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: var(--dark-navy);
+            padding: 0.5rem;
+            user-select: none;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details summary::before {
+            content: '▶';
+            display: inline-block;
+            transition: transform 0.3s ease;
+            color: var(--primary-blue);
+            font-size: 0.875rem;
+        }
+
+        details[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        details[open] {
+            padding-bottom: 1.5rem;
+        }
+
+        details .details-content {
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header id="header">
+        <nav>
+            <a href="https://samuel-c-santos.github.io/" class="logo">
+                <svg class="logo-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M960 512c0 249.408-203.2 448-448 448-244.778667 0-448-198.592-448-448S262.592 64 512 64s448 198.592 448 448"
+                        fill="#2196F3" />
+                    <path
+                        d="M507.52 718.08c0-8.96-4.48-13.44-13.44-17.92-26.88-8.96-53.76-8.96-76.16-31.381333-4.48-8.96-4.48-17.92-8.96-26.88-8.96-8.96-31.36-13.44-44.8-17.92h-89.6c-13.44-4.48-22.4-22.4-31.36-35.84 0-4.48 0-13.461333-8.96-13.461334-8.96-4.458667-17.92 4.501333-26.88 0-4.48-4.458667-4.48-8.96-4.48-13.418666 0-13.461333 8.96-26.901333 17.92-35.861334 13.44-8.96 26.88 4.48 40.32 4.48 4.48 0 4.48 0 8.96 4.48 13.44 4.48 17.92 22.4 17.92 35.861334v8.96c0 4.48 4.48 4.48 8.96 4.48 4.48-22.4 4.48-44.821333 8.96-67.2 0-26.88 26.88-53.781333 49.28-62.72 8.96-4.458667 13.44 4.501333 22.4 0 26.88-8.96 94.08-35.84 80.64-71.658667-8.96-31.381333-35.84-62.698667-71.68-58.24-8.96 4.501333-13.44 8.96-22.4 13.461333-13.44 8.96-40.32 35.84-53.76 35.84-22.4-4.48-22.4-35.84-17.92-49.301333 4.48-17.92 44.8-76.138667 71.68-67.178667l17.92 17.92c8.96 4.48 22.4 4.48 35.84 4.48 4.48 0 8.96 0 13.44-4.48 4.48-4.48 4.48-4.48 4.48-8.96 0-13.44-13.44-26.901333-22.4-35.861333s-22.4-17.92-35.84-22.378667c-44.8-13.461333-116.48 4.458667-152.32 35.84-35.84 31.36-62.72 85.12-80.64 129.92-8.96 26.88-17.92 62.698667-22.4 94.08-4.48 22.4-8.96 40.32 4.48 62.698667 13.44 26.88 40.32 53.781333 67.2 71.68 17.92 13.44 53.76 13.44 71.68 35.84 13.44 17.941333 8.96 40.32 8.96 62.72 0 26.88 17.92 49.28 26.88 71.658667 4.48 13.461333 8.96 31.381333 13.44 44.821333 0 4.48 4.48 31.36 4.48 35.84 26.88 13.44 49.28 26.901333 80.64 35.861333 4.48 0 22.4-26.901333 22.4-31.381333 13.44-13.44 22.4-31.36 35.84-40.32 8.96-4.48 17.92-8.96 26.88-17.941333 8.96-8.96 13.44-26.88 17.92-40.32 4.48-8.938667 8.96-26.858667 4.48-40.298667M516.48 305.92c4.48 0 8.96-4.48 17.92-8.96 13.44-8.96 26.901333-22.4 40.32-31.36 13.461333-8.96 26.901333-22.4 35.861333-31.36 13.44-8.96 22.4-26.88 26.88-40.341333 4.48-8.96 17.941333-26.88 13.44-40.32-4.48-8.96-26.88-13.44-35.84-17.92C579.2 126.698667 547.84 122.24 512 122.24c-13.44 0-31.36 4.458667-35.84 17.92-4.48 22.4 13.44 17.92 31.36 22.4 0 0 4.48 35.84 4.48 40.32 4.48 22.421333-8.96 35.84-8.96 58.24 0 13.44 0 35.84 8.96 44.8h4.48zM892.8 619.52c4.501333-8.96 4.501333-22.4 8.96-31.36 4.501333-22.421333 4.501333-44.8 4.501333-67.2 0-44.8-4.501333-89.578667-17.92-129.92-8.96-13.44-13.461333-26.88-17.941333-40.341333-8.96-22.378667-22.4-44.8-40.32-62.698667-17.92-22.4-40.341333-85.12-80.64-67.2-13.44 4.501333-22.4 22.421333-31.36 31.381333l-26.88 40.32c-4.501333 4.48-8.96 13.44-4.501333 17.92 0 4.48 4.501333 4.48 8.96 4.48 8.96 4.501333 13.461333 4.501333 22.421333 8.96 4.48 0 8.96 4.501333 4.48 8.96 0 0 0 4.501333-4.48 4.501334-22.421333 22.4-44.8 40.32-67.2 62.698666-4.48 4.48-8.96 13.44-8.96 17.92s4.48 4.48 4.48 8.96c0 4.501333-4.48 4.501333-8.96 8.96-8.96 4.501333-17.92 8.96-22.4 13.461334-4.48 8.96 0 22.4-4.48 31.36-4.48 22.4-17.941333 40.32-26.901333 62.72-8.96 13.418667-13.418667 26.88-22.378667 40.32 0 17.92-4.501333 31.36 4.458667 44.8 22.421333 31.36 62.72 13.44 94.08 26.901333 8.96 4.458667 17.92 4.458667 22.421333 13.418667 13.418667 13.461333 13.418667 35.861333 17.92 49.301333 4.458667 17.92 8.96 35.84 17.92 53.76 4.48 22.421333 13.44 44.821333 17.92 62.72 40.341333-31.36 76.16-67.178667 103.04-112 26.88-31.424 40.341333-67.242667 53.76-103.104"
+                        fill="#CDDC39" />
+                </svg>
+                <span>Samuel Santos</span>
+            </a>
+            <div class="nav-right">
+                <div class="nav-icons">
+                    <a href="https://github.com/samuel-c-santos" target="_blank" class="nav-icon" aria-label="GitHub">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                            </path>
+                        </svg>
+                    </a>
+                    <a href="https://linkedin.com/in/samuel-c-santos" target="_blank" class="nav-icon"
+                        aria-label="LinkedIn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z">
+                            </path>
+                            <rect x="2" y="9" width="4" height="12"></rect>
+                            <circle cx="4" cy="4" r="2"></circle>
+                        </svg>
+                    </a>
+                </div>
+                <a href="#contact" class="btn-contact">Entrar em Contato</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text animate-in">
+                <h1>Primeiros Passos no <span class="highlight">Google Earth Engine</span></h1>
+                <p>Aprenda a configurar seu projeto no Google Earth Engine, fazer upload de shapefiles e criar sua
+                    primeira visualização de dados geoespaciais na nuvem.</p>
+            </div>
+            <div class="hero-image animate-in">
+                <img src="img/11.comecando-a-codar.png" alt="Interface do Google Earth Engine Code Editor">
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container">
+        <article>
+            <div class="article-meta">
+                <span>Janeiro 2026</span>
+                <span>15 min de leitura</span>
+                <span>Google Earth Engine · JavaScript</span>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- [SEÇÃO] INTRODUÇÃO -->
+            <!-- ============================================ -->
+            <section>
+                <h2>Introdução</h2>
+                <p>O Google Earth Engine (GEE) é uma plataforma poderosa para análise de dados geoespaciais em escala
+                    planetária. Com acesso gratuito a décadas de imagens de satélite e datasets ambientais, o GEE
+                    democratiza a análise de sensoriamento remoto e permite processamento massivo de dados na nuvem.</p>
+
+                <p>Neste tutorial, você aprenderá o processo completo desde a criação da sua conta até a visualização do
+                    seu primeiro asset. Vamos passar por cada etapa da configuração do projeto no Google Cloud, ativação
+                    da API do Earth Engine e upload de um shapefile para visualização no Code Editor.</p>
+
+                <!-- Exemplo de Info Card -->
+                <div class="info-card">
+                    <h4>O que você vai aprender</h4>
+                    <ul>
+                        <li>Registrar um projeto não comercial no Google Earth Engine</li>
+                        <li>Configurar e ativar a API do Earth Engine no Google Cloud</li>
+                        <li>Fazer upload de shapefiles como assets no GEE</li>
+                        <li>Escrever e executar seu primeiro script JavaScript no Code Editor</li>
+                        <li>Visualizar dados geoespaciais no mapa interativo</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- [SEÇÃO] PRÉ-REQUISITOS -->
+            <!-- ============================================ -->
+            <section>
+                <h2>Pré-requisitos</h2>
+                <ul>
+                    <li><strong>Conta Google:</strong> Você precisará de uma conta Google válida para acessar o GEE</li>
+                    <li><strong>Credenciais acadêmicas ou institucionais:</strong> Para registro não comercial, você
+                        deve estar vinculado a uma instituição de ensino ou pesquisa</li>
+                    <li><strong>Shapefile de exemplo:</strong> Tenha um shapefile (.shp, .shx, .dbf, .prj) pronto para
+                        upload</li>
+                    <li><strong>Navegador atualizado:</strong> Chrome, Firefox ou Edge em versão recente</li>
+                </ul>
+
+                <div class="info-card warning">
+                    <h4>Atenção</h4>
+                    <p>O processo de registro pode levar alguns minutos para ser aprovado. Certifique-se de fornecer
+                        informações precisas sobre sua instituição e objetivos de pesquisa para evitar rejeição do
+                        cadastro.</p>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- [SEÇÃO] PASSO A PASSO -->
+            <!-- ============================================ -->
+            <section>
+                <h2>Passo a Passo</h2>
+
+                <!-- PASSO 1 -->
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Acessar a Plataforma</h3>
+                    <p><strong>Ação:</strong> Acesse <a href="https://code.earthengine.google.com/"
+                            target="_blank">https://code.earthengine.google.com/</a></p>
+
+                    <p><strong>Detalhe:</strong> Na tela inicial de boas-vindas do Earth Engine, clique no botão azul
+                        <strong>"I WANT TO REGISTER A NEW PROJECT"</strong> para iniciar o cadastro.
+                    </p>
+
+                    <img src="img/1.entre_no_code_editor.png"
+                        alt="Tela inicial do Google Earth Engine solicitando registro de projeto">
+                </div>
+
+                <!-- PASSO 2 -->
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Acessar Página de Projetos</h3>
+                    <p><strong>Ação:</strong> Escolher criar ou selecionar projeto.</p>
+
+                    <p><strong>Detalhe:</strong> Após clicar em "I WANT TO REGISTER A NEW PROJECT", você será
+                        direcionado para a página de projetos do Google Cloud. Clique no botão indicado para criar um
+                        novo projeto ou selecionar um existente.</p>
+
+                    <img src="img/2.criar_um_projeto.png" alt="Página de seleção de projetos no Google Cloud">
+                </div>
+
+                <!-- PASSO 2.1 -->
+                <div class="step-card">
+                    <div class="step-number">2.1</div>
+                    <h3>Criar o Projeto no Google Cloud</h3>
+                    <p><strong>Ação:</strong> Criar o "container" do projeto.</p>
+
+                    <p><strong>Detalhe:</strong> Antes de configurar o Earth Engine, precisamos criar o projeto. Na tela
+                        de "Novo projeto", dê um nome ao seu projeto (ex: <strong>My Project 18075</strong> ou algo como
+                        <strong>analise-simplificada</strong>). Em "Local", mantenha como <strong>"Nenhuma
+                            organização"</strong>. Clique no botão azul <strong>"Criar"</strong>.
+                    </p>
+
+                    <img src="img/2.1.escolha_o_nome_e_crie_o_projeto.png"
+                        alt="Formulário de criação de novo projeto no Google Cloud">
+                </div>
+
+                <!-- PASSO 2.2 (ESCOLHER LICENÇA) -->
+                <div class="step-card">
+                    <div class="step-number">2.2</div>
+                    <h3>Escolher a Licença Não Comercial</h3>
+                    <p><strong>Ação:</strong> Definir o tipo de conta.</p>
+
+                    <p><strong>Detalhe:</strong> Com o projeto criado e selecionado (verifique se o nome dele aparece no
+                        topo, onde diz <strong>"analise simplificada"</strong>), vamos definir o tipo de conta. Você
+                        verá a tela de Configuração. Ignore a opção de cima ("Registrar para uso comercial"). Vá na
+                        opção de baixo: <strong>"Confira se você se qualifica para uso não comercial"</strong> e clique
+                        em <strong>"Começar"</strong>.</p>
+
+                    <img src="img/2.2.registrar_um_projeto_nao_comercial.png"
+                        alt="Seleção entre uso comercial e não comercial do Google Earth Engine">
+                </div>
+
+                <!-- PASSO 2.3 (SELECIONAR TIPO DE ORGANIZAÇÃO) -->
+                <div class="step-card">
+                    <div class="step-number">2.3</div>
+                    <h3>Selecionar o Tipo de Organização</h3>
+                    <p><strong>Ação:</strong> Início do formulário de cadastro.</p>
+
+                    <p><strong>Detalhe:</strong> Agora começa o formulário de cadastro para pesquisadores/estudantes. No
+                        <strong>passo 1</strong> do formulário, selecione a categoria que melhor te define, por exemplo:
+                        <strong>"Instituição acadêmica pública ou particular (incluindo professores...)"</strong>.
+                        Clique em <strong>"Próximo"</strong>.
+                    </p>
+
+                    <img src="img/2.3.selecionar_tipo_organanizacao.png"
+                        alt="Seleção do tipo de organização no formulário de registro">
+                </div>
+
+                <!-- PASSO 2.4 (PREENCHER DADOS DO TRABALHO) -->
+                <div class="step-card">
+                    <div class="step-number">2.4</div>
+                    <h3>Preencher Dados do Trabalho</h3>
+                    <p><strong>Ação:</strong> Justificar o acesso gratuito.</p>
+
+                    <p><strong>Detalhe:</strong> Aqui você justifica por que precisa do acesso gratuito:</p>
+                    <ul>
+                        <li><strong>Instituição:</strong> Coloque o nome da sua universidade ou órgão</li>
+                        <li><strong>Pagamento:</strong> Marque <strong>"Não"</strong> (essencial para essa licença)</li>
+                        <li><strong>Uso:</strong> Marque <strong>"Pesquisa científica"</strong></li>
+                        <li><strong>Pergunta de pesquisa:</strong> Descreva brevemente o que vai analisar</li>
+                        <li><strong>Região:</strong> Defina como <strong>"Regional"</strong> e escreva <strong> o local
+                                da sua pesquisa</strong></li>
+                    </ul>
+
+                    <img src="img/2.4.preencher_dados_do_seu_trabalho.png"
+                        alt="Formulário de dados institucionais e objetivos de pesquisa">
+                </div>
+
+                <!-- PASSO 2.5 (MARCAR ÁREAS DE INTERESSE) -->
+                <div class="step-card">
+                    <div class="step-number">2.5</div>
+                    <h3>Marcar Áreas de Interesse</h3>
+                    <p><strong>Ação:</strong> Definir temas de pesquisa.</p>
+
+                    <p><strong>Detalhe:</strong> Marque as caixas relacionadas ao seu estudo, como <strong>"Proteção e
+                            conservação"</strong>. Selecione a atividade principal no menu suspenso (ex: <strong>Água
+                            doce...</strong>).</p>
+
+                    <img src="img/2.5.marcar_suas_areas_de_interesse.png"
+                        alt="Seleção de áreas de interesse e temas de pesquisa">
+                </div>
+
+                <!-- PASSO 2.6 (CONFIRMAR E REGISTRAR) -->
+                <div class="step-card">
+                    <div class="step-number">2.6</div>
+                    <h3>Confirmar e Registrar</h3>
+                    <p><strong>Ação:</strong> Revisão final.</p>
+
+                    <p><strong>Detalhe:</strong> Revise o resumo (<strong>Review summary</strong>). Clique no botão azul
+                        <strong>"Registrar"</strong>.
+                    </p>
+
+                    <img src="img/2.6.confirme.png" alt="Tela de revisão e confirmação dos dados do registro">
+                </div>
+
+                <!-- PASSO 3 (ATIVAR API) -->
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Ativação Obrigatória</h3>
+                    <p><strong>Ação:</strong> Ativação obrigatória.</p>
+
+                    <p><strong>Detalhe:</strong> Ao clicar em registrar, um pop-up aparecerá pedindo para ativar as APIs
+                        obrigatórias. Clique em
+                        <strong>"Ativar"</strong> para conectar o Earth Engine ao seu projeto.
+                    </p>
+                    <img src="img/3.ative_a_api.png" alt="Pop-up solicitando ativação da API do Earth Engine">
+
+                    <div class="info-card warning">
+                        <h4>Importante</h4>
+                        <p>Sem a ativação da API, você não conseguirá executar scripts ou acessar os datasets do Earth
+                            Engine. Aguarde a conclusão desta etapa antes de prosseguir.</p>
+                    </div>
+                </div>
+
+                <!-- PASSO 4 (CONFIRMAÇÃO) -->
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h3>Confirmação de Sucesso</h3>
+                    <p><strong>Ação:</strong> Confirmação de sucesso.</p>
+
+                    <p><strong>Detalhe:</strong> Aguarde a mensagem <strong>"Seu registro para uso não comercial está
+                            pronto"</strong>. Clique em <strong>"Continuar"</strong>.</p>
+
+                    <img src="img/4.acessar_a_api.png" alt="Mensagem de confirmação de registro bem-sucedido">
+                </div>
+
+                <!-- PASSO 5 (IR PARA CODE EDITOR) -->
+                <div class="step-card">
+                    <div class="step-number">5</div>
+                    <h3>Voltar ao Ambiente de Código</h3>
+                    <p><strong>Ação:</strong> Voltar ao ambiente de código.</p>
+
+                    <p><strong>Detalhe:</strong> Na tela de visão geral ("Este é o Earth Engine"), vá até o cartão
+                        <strong>"Conectar"</strong> e clique no link <strong>"editor de código"</strong> para abrir a
+                        interface de programação.
+                    </p>
+
+                    <img src="img/5.ir_para_o_code_editor.png" alt="Tela do Google Cloud com link para o Code Editor">
+                </div>
+
+                <!-- PASSO 6 (RECONHECIMENTO) -->
+                <div class="step-card">
+                    <div class="step-number">6</div>
+                    <h3>Visualização do Editor</h3>
+                    <p><strong>Ação:</strong> Visualização do editor.</p>
+
+                    <p><strong>Detalhe:</strong> Agora você está no ambiente de desenvolvimento, pronto para criar
+                        scripts e gerenciar arquivos.</p>
+
+                    <p>Esta é a tela principal do Code Editor, dividida em três áreas principais:</p>
+                    <ul>
+                        <li><strong>Esquerda:</strong> Gerenciador de Scripts e Assets (seus arquivos e shapefiles)</li>
+                        <li><strong>Centro:</strong> Editor de código JavaScript</li>
+                        <li><strong>Direita:</strong> Console (resultados), Inspector (informações do mapa) e Tasks
+                            (tarefas de exportação)</li>
+                    </ul>
+
+                    <img src="img/6.podemos_começar_a_codar.png"
+                        alt="Interface completa do Google Earth Engine Code Editor">
+                </div>
+
+                <!-- PASSO 7 (UPLOAD SHAPEFILE) -->
+                <div class="step-card">
+                    <div class="step-number">7</div>
+                    <h3>Iniciar Upload de Dados</h3>
+                    <p><strong>Ação:</strong> Iniciar upload de dados.</p>
+
+                    <p><strong>Detalhe:</strong> Na aba <strong>"Assets"</strong> (esquerda), clique em
+                        <strong>"NEW"</strong> e depois em <strong>"Shapefile"</strong>. Clique em
+                        <strong>"SELECT"</strong> e escolha todos os arquivos do seu shapefile (.shp, .dbf, .shx, .prj).
+                    </p>
+                    <img src="img/7_em_assets_clique_em_new-shapefile-select-e-escolha-os-arquivos.png"
+                        alt="Diálogo de upload de shapefile no GEE">
+
+                    <div class="info-card">
+                        <h4>Formatos Aceitos</h4>
+                        <p>O GEE aceita shapefiles, GeoJSON, KML e arquivos CSV com coordenadas. Para shapefiles, todos
+                            os componentes (.shp, .shx, .dbf, .prj) devem ser enviados simultaneamente.</p>
+                    </div>
+                </div>
+
+                <!-- PASSO 8 (DEFINIR NOME) -->
+                <div class="step-card">
+                    <div class="step-number">8</div>
+                    <h3>Configurar o Asset</h3>
+                    <p><strong>Ação:</strong> Configurar o asset.</p>
+
+                    <p><strong>Detalhe:</strong> Dê um nome ao arquivo (ex: <span
+                            class="file-ref">estado-do-para</span>) no campo <strong>"Asset ID"</strong> e clique no
+                        botão azul <strong>"UPLOAD"</strong>.</p>
+
+                    <img src="img/8.defina_o_nome_e_clique_em_upload.png"
+                        alt="Configuração do nome do asset e botão de upload">
+                </div>
+
+                <!-- PASSO 9 (MONITORAR UPLOAD) -->
+                <div class="step-card">
+                    <div class="step-number">9</div>
+                    <h3>Monitorar Processamento</h3>
+                    <p><strong>Ação:</strong> Monitorar processamento.</p>
+
+                    <p><strong>Detalhe:</strong> Acompanhe a barra de progresso na aba <strong>"Tasks"</strong>
+                        (direita) até que o processo <strong>"Ingest table"</strong> esteja concluído (azul).</p>
+
+                    <img src="img/9.verifique-o-status-em-tasks.png" alt="Aba Tasks mostrando progresso do upload">
+
+                    <div class="info-card">
+                        <h4>Tempo de Processamento</h4>
+                        <p>O tempo varia de segundos a minutos, dependendo do tamanho e complexidade da geometria.
+                            Shapefiles simples de estados ou municípios geralmente processam em menos de 1 minuto.</p>
+                    </div>
+                </div>
+
+                <!-- PASSO 10 (COPIAR ID) -->
+                <div class="step-card">
+                    <div class="step-number">10</div>
+                    <h3>Obter o ID do asset</h3>
+                    <p><strong>Ação:</strong> Obter o ID do asset.</p>
+
+                    <p><strong>Detalhe:</strong> Atualize a lista de Assets, clique no novo arquivo <span
+                            class="file-ref">estado-do-para</span> e copie o caminho dele clicando no ícone de prancheta
+                        ao lado de <strong>"Table ID"</strong>.</p>
+
+                    <img src="img/10.atualize_assets_visualize-e-copie-o-id.png"
+                        alt="Detalhes do asset com botão para copiar o Table ID">
+                </div>
+
+                <!-- PASSO 11 (CÓDIGO FINAL) -->
+                <div class="step-card">
+                    <div class="step-number">11</div>
+                    <h3>Rodar o Script</h3>
+                    <p><strong>Ação:</strong> Executar o primeiro script.</p>
+
+                    <p><strong>Detalhe:</strong> Cole o código abaixo no editor central, substituindo o ID do asset pelo
+                        que você copiou no passo anterior, e clique em <strong>"Run"</strong> para visualizar o polígono
+                        no mapa.</p>
+
+                    <div class="code-window">
+                        <div class="window-header">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                            <span class="title">script.js</span>
+                        </div>
+                        <pre><code class="language-javascript">// 1. Carregar o asset
+// Definimos o caminho do seu polígono
+var roi = ee.FeatureCollection("projects/analise-simplificada/assets/estado-do-para");
+
+// 2. Centralizar a visualização
+// O comando foca o mapa no seu polígono com um zoom automático
+Map.centerObject(roi, 6);
+
+// 3. Opção A: Visualização Simples (Preenchida)
+// Exibe o polígono com uma cor sólida
+Map.addLayer(roi, { color: 'blue' }, 'Estado do Pará (Preenchido)');
+
+// 4. Opção B: Visualização de Contorno (Mais recomendada)
+// Cria um estilo apenas com a borda vermelha e fundo transparente
+var empty = ee.Image().byte();
+var outline = empty.paint({
+    featureCollection: roi,
+    color: 1,
+    width: 2
+});
+
+Map.addLayer(outline, { palette: 'red' }, 'Estado do Pará (Contorno)');</code></pre>
+                    </div>
+
+                    <img src="img/11.comecando-a-codar.png"
+                        alt="Code Editor exibindo o script com o mapa do Pará visualizado">
+
+                    <details>
+                        <summary>Entenda o código</summary>
+                        <div class="details-content">
+                            <p style="margin-top: 1rem;"><strong>1. Carregar o Asset:</strong></p>
+                            <p style="margin-left: 1.5rem; line-height: 1.8;">
+                                • <code>var roi</code> cria uma variável chamada "roi" (Region of Interest)<br>
+                                • <code>ee.FeatureCollection()</code> carrega um asset de geometria vetorial<br>
+                                • Substitua o caminho pelo <strong>Table ID</strong> que você copiou no passo anterior
+                            </p>
+
+                            <p style="margin-top: 1.5rem;"><strong>2. Centralizar o Mapa:</strong></p>
+                            <p style="margin-left: 1.5rem; line-height: 1.8;">
+                                • <code>Map.centerObject(roi, 6)</code> centraliza o mapa na área do polígono<br>
+                                • O número <code>6</code> é o nível de zoom (quanto menor, mais afastado)
+                            </p>
+
+                            <p style="margin-top: 1.5rem;"><strong>3. Visualização Preenchida:</strong></p>
+                            <p style="margin-left: 1.5rem; line-height: 1.8;">
+                                • <code>Map.addLayer()</code> adiciona uma camada ao mapa<br>
+                                • <code>{ color: 'blue' }</code> define a cor de preenchimento azul<br>
+                                • <code>'Estado do Pará (Preenchido)'</code> é o nome da camada no painel
+                            </p>
+
+                            <p style="margin-top: 1.5rem;"><strong>4. Visualização de Contorno:</strong></p>
+                            <p style="margin-left: 1.5rem; line-height: 1.8;">
+                                • <code>ee.Image().byte()</code> cria uma imagem vazia<br>
+                                • <code>.paint()</code> "pinta" o contorno do polígono na imagem<br>
+                                • <code>featureCollection: roi</code> define qual geometria desenhar<br>
+                                • <code>width: 2</code> define a espessura da linha em pixels<br>
+                                • <code>palette: 'red'</code> define a cor do contorno em vermelho
+                            </p>
+                        </div>
+                    </details>
+
+                    <div class="info-card" style="margin-top: 2rem;">
+                        <h4>Resultado Esperado</h4>
+                        <p>O mapa abaixo do editor deve centralizar na região do seu shapefile. Você verá duas camadas
+                            no painel de camadas (lado direito): uma com preenchimento azul e outra apenas com o
+                            contorno vermelho.
+                            Você pode ligar/desligar cada uma clicando nas checkboxes ao lado dos nomes.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- [SEÇÃO] VANTAGENS/CONCLUSÃO -->
+            <!-- ============================================ -->
+            <section>
+                <h2>Vantagens do Google Earth Engine</h2>
+                <ul>
+                    <li><strong>Processamento na Nuvem:</strong> Não precisa baixar gigabytes de imagens de satélite,
+                        todo o processamento é feito nos servidores do Google</li>
+                    <li><strong>Catálogo Massivo:</strong> Acesso gratuito a mais de 40 anos de dados de satélite
+                        (Landsat, Sentinel, MODIS) e datasets climáticos</li>
+                    <li><strong>Escalabilidade:</strong> Processe análises de municípios até continentes inteiros sem se
+                        preocupar com capacidade de hardware</li>
+                    <li><strong>Colaboração:</strong> Compartilhe scripts e assets facilmente com colaboradores ou
+                        publique seus códigos</li>
+                    <li><strong>APIs em Python e JavaScript:</strong> Use tanto o Code Editor (JavaScript) quanto a
+                        biblioteca Python (ee) em notebooks</li>
+                </ul>
+            </section>
+
+            <!-- Download Section -->
+            <div class="download-section">
+                <h3>Baixe os Arquivos do Tutorial</h3>
+                <p>Acesse o repositório no GitHub para baixar o script JavaScript completo e shapefiles de exemplo para
+                    praticar.</p>
+                <a href="https://github.com/samuel-c-santos/tutorial-gee-primeiros-passos" class="download-btn"
+                    target="_blank">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                        </path>
+                    </svg>
+                    Ver no GitHub
+                </a>
+            </div>
+
+            <section>
+                <h2>Conclusão</h2>
+                <p>Parabéns! Você concluiu a configuração completa do Google Earth Engine e já executou seu primeiro
+                    script de visualização. Agora você tem acesso a uma das plataformas mais poderosas para análise de
+                    dados geoespaciais do mundo.</p>
+
+                <p>A partir daqui, explore o catálogo de datasets, experimente filtros temporais, realize cálculos de
+                    índices de vegetação (NDVI, EVI) e crie mapas temáticos. O GEE abre portas para análises que seriam
+                    impossíveis em computadores convencionais. Continue praticando e compartilhe suas descobertas com a
+                    comunidade!</p>
+            </section>
+        </article>
+    </div>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Contato</h2>
+                <p>Gostou do tutorial? Entre em contato para tirar dúvidas, sugerir melhorias ou colaborar em projetos.
+                </p>
+            </div>
+
+            <div class="contact-info">
+                <div class="contact-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                        </path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    <a href="mailto:samuelsantosambiental@gmail.com">Email</a>
+                </div>
+
+                <div class="contact-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                        <rect x="2" y="9" width="4" height="12"></rect>
+                        <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                    <a href="https://www.linkedin.com/in/samuel-c-santos/" target="_blank">LinkedIn</a>
+                </div>
+
+                <div class="contact-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                        </path>
+                    </svg>
+                    <a href="https://github.com/samuel-c-santos" target="_blank">GitHub</a>
+                </div>
+
+                <div class="contact-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    <a href="https://samuel-c-santos.github.io/" target="_blank">Portfólio</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Samuel Santos. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        // Scroll effect for header
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    </script>
+
+    <!-- Prism.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+</body>
+
+</html>

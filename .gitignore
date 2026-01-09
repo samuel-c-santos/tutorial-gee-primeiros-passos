@@ -1,0 +1,29 @@
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos temporários
+*.tmp
+*.bak
+*~
+
+# Arquivos de IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Node modules (caso use alguma ferramenta npm)
+node_modules/
+
+# Logs
+*.log
+
+# Arquivos grandes de dados (descomente se necessário)
+# *.tif
+# *.geotiff
+# *.shp
+
+# Mantenha as pastas vazias com .gitkeep
+!img/.gitkeep
+!dados/.gitkeep
