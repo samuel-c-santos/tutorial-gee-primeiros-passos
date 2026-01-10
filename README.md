@@ -2,7 +2,7 @@
 
 Tutorial interativo e completo para iniciar no Google Earth Engine (GEE), desde o registro até a primeira visualização de dados geoespaciais.
 
-![Tutorial Preview](img\Macbook-Air-127.0.0.1.png)
+![Tutorial Preview](img/Macbook-Air-127.0.0.1.png)
 
 **Acesse o tutorial:** [clique aqui](https://samuelsantos.site/tutorial-gee-primeiros-passos)
 
